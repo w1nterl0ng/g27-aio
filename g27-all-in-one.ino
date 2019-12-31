@@ -40,11 +40,11 @@ int lastButtonState[10] = {0,0,0,0,0,0,0,0,0,0};
 
 void loop() {
   // put your main code here, to run repeatedly:
-  RzAxis_ = analogRead(A0);  
+  RzAxis_ = analogRead(A1);  
   Joystick.setRzAxis(1024 - RzAxis_);  
-  RyAxis_ = analogRead(A1);  
+  RyAxis_ = analogRead(A2);  
   Joystick.setRyAxis(1024 - RyAxis_);  
-  RxAxis_ = analogRead(A2);
+  RxAxis_ = analogRead(A3);
   Joystick.setRxAxis(1024 - RxAxis_);
 
   for (int index = 0; index < 10; index++){
@@ -56,5 +56,12 @@ void loop() {
     }
     Serial.print(lastButtonState[index]);
   }
+  // print pedal values
+  Serial.print(1024 - RzAxis_);
+  Serial.print(" ");
+  Serial.print(1024 - RyAxis_);
+  Serial.print(" ");
+  Serial.print(1024 - RxAxis_);
+ 
   Serial.println();
 }
