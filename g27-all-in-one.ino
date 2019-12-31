@@ -13,6 +13,12 @@ int RxAxis_ = 0;
 int RyAxis_ = 0;  
 int RzAxis_ = 0; 
 
+int xLock = 0; // this is for throrle lock
+int xLimit = 0; // this is for throrle limiter
+long longPressTime = 1000; //1000 is 1 second
+bool lockSetButtonState = 1;
+bool lockSetButtonLastState = 1;
+
 const bool initAutoSendState = true; 
 Adafruit_7segment matrix = Adafruit_7segment();
 
@@ -32,7 +38,7 @@ void setup() {
   matrix.begin(0x70);
 
   Joystick.begin();
-  Serial.begin(115200);
+  //Serial.begin(115200);
 
 }
 
@@ -43,17 +49,61 @@ int lastButtonState[2] = {0,0};
 void loop() {
   // put your main code here, to run repeatedly:
 
+  // Throttle lock controls and value
+  lockSetButtonState = digitalRead(4);
+  if (lockSetButtonState != lockSetButtonLastState) {
+    if (lockSetButtonState == HIGH) {
+      // Setting the lock value
+      xLock = 1024 - analogRead(A3);
+    }
+  }
+  lockSetButtonLastState = lockSetButtonState;
+  // increase throttle lock
+  if (xLock > 0) {
+    if (digitalRead(7) == LOW) {
+      xLock++;
+    }
+    if (digitalRead(8) == LOW) {
+      xLock--;
+    }
+  }
+  //press plus and minus to clear
+  if ((digitalRead(7) == LOW) && (digitalRead(8) == LOW)) {
+    xLock = 0;
+  }
+
+  if (digitalRead(5) == LOW) {
+    xLimit = 1024 - analogRead(A3);
+  }
+  // increase throttle lock
+  if (xLimit > 0) {
+    if (digitalRead(6) == LOW) {
+      xLimit++;
+    }
+    if (digitalRead(9) == LOW) {
+      xLimit--;
+    }
+  }
+  //long press minus to clear
+  if ((digitalRead(6) == LOW) && (digitalRead(9) == LOW)) {
+    xLimit = 0;
+  }
+
+
+
   RzAxis_ = analogRead(A1);  
   Joystick.setRzAxis(1024 - RzAxis_);  
   RyAxis_ = analogRead(A2);  
-  Joystick.setRyAxis(1024 - RyAxis_);  
-  RxAxis_ = analogRead(A3);
-  Joystick.setRxAxis(1024 - RxAxis_);
+  Joystick.setRyAxis(1024 - RyAxis_);
+  if ((xLock > 0) && (digitalRead(10) == LOW)) {
+    RxAxis_ = xLock;
+  }else if ((xLimit > 0) && (digitalRead(16) == LOW)) {
+    RxAxis_ = min(1024 - analogRead(A3),xLimit);
+  }else{
+    RxAxis_ = (1024 - analogRead(A3));
+  }
+  Joystick.setRxAxis(RxAxis_);
 
-  //matrix.blinkRate(1);
-  //matrix.drawColon(true);
-  matrix.print(1024 - RxAxis_);
-  matrix.writeDisplay();
 
   // Pass through the Ignition and Starter to the Joystick
   // We will be using the other buttons for our own controlls
@@ -65,12 +115,9 @@ void loop() {
       lastButtonState[index] = currentButtonState;
     }
   }
-  // print pedal values
-  //Serial.print(1024 - RzAxis_);
-  //Serial.print(" ");
-  //Serial.print(1024 - RyAxis_);
-  //Serial.print(" ");
-  //Serial.print(1024 - RxAxis_);
- 
-  Serial.println();
+
+  //matrix.blinkRate(1);
+  //matrix.drawColon(true);
+  matrix.print(RxAxis_);
+  matrix.writeDisplay();
 }
