@@ -14,7 +14,7 @@ int RyAxis_ = 0;
 int RzAxis_ = 0; 
 
 const bool initAutoSendState = true; 
-
+Adafruit_7segment matrix = Adafruit_7segment();
 
 void setup() {
   // put your setup code here, to run once:
@@ -29,17 +29,20 @@ void setup() {
   pinMode(15, INPUT_PULLUP); // Starter
   pinMode(16, INPUT_PULLUP); // SPST Right
 
+  matrix.begin(0x70);
+
   Joystick.begin();
   Serial.begin(115200);
 
 }
 
-int buttonPins[10] = {4,5,6,7,8,9,10,14,15,16};
-int lastButtonState[10] = {0,0,0,0,0,0,0,0,0,0};
+int buttonPins[2] = {14,15};
+int lastButtonState[2] = {0,0};
 
 
 void loop() {
   // put your main code here, to run repeatedly:
+
   RzAxis_ = analogRead(A1);  
   Joystick.setRzAxis(1024 - RzAxis_);  
   RyAxis_ = analogRead(A2);  
@@ -47,21 +50,27 @@ void loop() {
   RxAxis_ = analogRead(A3);
   Joystick.setRxAxis(1024 - RxAxis_);
 
-  for (int index = 0; index < 10; index++){
+  //matrix.blinkRate(1);
+  //matrix.drawColon(true);
+  matrix.print(1024 - RxAxis_);
+  matrix.writeDisplay();
+
+  // Pass through the Ignition and Starter to the Joystick
+  // We will be using the other buttons for our own controlls
+  for (int index = 0; index < 2; index++){
     int currentButtonState = !digitalRead(buttonPins[index]);
     if (currentButtonState != lastButtonState[index])
     {
       Joystick.setButton(index, currentButtonState);
       lastButtonState[index] = currentButtonState;
     }
-    Serial.print(lastButtonState[index]);
   }
   // print pedal values
-  Serial.print(1024 - RzAxis_);
-  Serial.print(" ");
-  Serial.print(1024 - RyAxis_);
-  Serial.print(" ");
-  Serial.print(1024 - RxAxis_);
+  //Serial.print(1024 - RzAxis_);
+  //Serial.print(" ");
+  //Serial.print(1024 - RyAxis_);
+  //Serial.print(" ");
+  //Serial.print(1024 - RxAxis_);
  
   Serial.println();
 }
